@@ -201,3 +201,24 @@ test('photos are validated', function (string $path, bool $valid, string $except
         'message' => 'Photo\'s width and height (11000px) exceed allowed 10000px in total',
     ],
 ]);
+
+test('photo uri is validated', function (string $url, bool $valid, string $exceptionClass = null, string $exceptionMessage = null) {
+    if ($valid) {
+        expect(chat()->photo($url))
+            ->toBeInstanceOf(Telegraph::class);
+    } else {
+        expect(fn () => chat()->photo($url))
+            ->toThrow($exceptionClass, $exceptionMessage);
+    }
+})->with([
+    'valid url' => [
+        'file' => 'https://www.fillmurray.com/460/300.png',
+        'valid' => true,
+    ],
+    'invalid url' => [
+        'file' => 'fillmurray.com/460/300.png',
+        'valid' => false,
+        'exception' => FileException::class,
+        'message' => 'not found',
+    ],
+]);
