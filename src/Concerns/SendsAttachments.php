@@ -10,6 +10,7 @@ use DefStudio\Telegraph\DTO\Attachment;
 use DefStudio\Telegraph\Exceptions\FileException;
 use DefStudio\Telegraph\Telegraph;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 /**
@@ -92,6 +93,15 @@ trait SendsAttachments
     {
         $telegraph = clone $this;
 
+        $telegraph->endpoint = self::ENDPOINT_SEND_PHOTO;
+
+        $telegraph->data['chat_id'] = $telegraph->getChat()->chat_id;
+
+        if (URL::isValidUrl($path)) {
+            $telegraph->data['photo'] = $path;
+            return $telegraph;
+        }
+
         if (!File::exists($path)) {
             throw FileException::fileNotFound('Photo', $path);
         }
@@ -110,10 +120,6 @@ trait SendsAttachments
         if (($ratio = $height / $width) > Telegraph::MAX_PHOTO_HEIGHT_WIDTH_RATIO || $ratio < (1 / Telegraph::MAX_PHOTO_HEIGHT_WIDTH_RATIO)) {
             throw FileException::invalidPhotoRatio($ratio);
         }
-
-        $telegraph->endpoint = self::ENDPOINT_SEND_PHOTO;
-
-        $telegraph->data['chat_id'] = $telegraph->getChat()->chat_id;
 
         $telegraph->files->put('photo', new Attachment($path, $filename));
 
